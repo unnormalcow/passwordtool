@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>非常母牛-密码生成器 (Web版)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>非常母牛-密码生成器 (Web版)</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'base64Tab')">Base64 编解码</button>
+            <button class="tab-button" onclick="openTab(event, 'passwordTab')">密码生成器</button>
+        </div>
+
+        <div id="base64Tab" class="tab-content active">
+            <h2>Base64 编解码</h2>
+            <div class="form-group">
+                <label for="base64Input">输入文本:</label>
+                <textarea id="base64Input" rows="5"></textarea>
+            </div>
+            <div class="button-group">
+                <button onclick="encodeBase64()">编码 (Encode)</button>
+                <button onclick="decodeBase64()">解码 (Decode)</button>
+            </div>
+            <div class="form-group">
+                <label for="base64Output">输出结果:</label>
+                <textarea id="base64Output" rows="5" readonly></textarea>
+            </div>
+            <button onclick="clearBase64Fields()">清空</button>
+        </div>
+
+        <div id="passwordTab" class="tab-content">
+            <h2>密码生成器</h2>
+            <div class="options-frame">
+                <h3>密码选项</h3>
+                <div class="form-group-inline">
+                    <input type="checkbox" id="useUppercase" checked> <label for="useUppercase">包含大写字母 (A-Z)</label>
+                </div>
+                <div class="form-group-inline">
+                    <input type="checkbox" id="useLowercase" checked> <label for="useLowercase">包含小写字母 (a-z)</label>
+                </div>
+                <div class="form-group-inline">
+                    <input type="checkbox" id="useDigits" checked> <label for="useDigits">包含数字 (0-9)</label>
+                </div>
+                <div class="form-group-inline">
+                    <input type="checkbox" id="useSpecial" checked> <label for="useSpecial">包含特殊字符 (!@#$%^&*)</label>
+                </div>
+                <div class="form-group-inline">
+                    <label for="passwordLength">密码长度:</label>
+                    <input type="number" id="passwordLength" value="12" min="4" max="256">
+                </div>
+            </div>
+            <button onclick="generatePasswordsBatch()">生成10个密码</button>
+            <button onclick="exportPasswordsToCSV()">导出密码到CSV</button> <!-- 替换打开CSV文件的功能 -->
+            
+            <h3>生成的密码:</h3>
+            <div id="passwordsDisplayArea">
+                <!-- 密码将在这里动态生成 -->
+            </div>
+        </div>
+
+        <div class="status-bar" id="statusBar">准备就绪</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
