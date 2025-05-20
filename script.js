@@ -83,8 +83,7 @@ function generatePasswordsBatch() {
     const useSpecial = document.getElementById('useSpecial').checked;
     const length = parseInt(document.getElementById('passwordLength').value);
     const displayArea = document.getElementById('passwordsDisplayArea');
-    displayArea.innerHTML = ''; // Clear previous passwords
-
+    displayArea.innerHTML = '';
     if (!useUppercase && !useLowercase && !useDigits && !useSpecial) {
         alert("请至少选择一种字符类型");
         updateStatusBar("密码生成失败: 未选择字符类型", true);
@@ -95,32 +94,41 @@ function generatePasswordsBatch() {
         updateStatusBar("密码生成失败: 长度无效", true);
         return;
     }
-
     let generatedPasswords = [];
     for (let i = 0; i < 10; i++) {
         const password = _generateSinglePassword(length, useUppercase, useLowercase, useDigits, useSpecial);
         if (password) {
             generatedPasswords.push(password);
             const { strengthText, strengthClass } = checkPasswordStrength(password);
-            
             const passwordDiv = document.createElement('div');
             passwordDiv.className = 'password-entry';
-            
+            // 密码
             const passwordTextSpan = document.createElement('span');
             passwordTextSpan.className = 'password-text';
             passwordTextSpan.textContent = password;
-            
+            // 强度
             const strengthSpan = document.createElement('span');
             strengthSpan.className = `password-strength ${strengthClass}`;
-            strengthSpan.textContent = strengthText.split(' (')[0]; // Show only '强', '中', '弱'
-            
+            strengthSpan.textContent = strengthText.split(' (')[0];
+            // 是否已用
+            const usedSpan = document.createElement('span');
+            usedSpan.className = 'password-used';
+            usedSpan.textContent = '未使用';
+            usedSpan.style.color = '';
+            // 复制按钮
             const copyButton = document.createElement('button');
             copyButton.className = 'copy-btn';
             copyButton.textContent = '复制';
-            copyButton.onclick = function() { copyToClipboard(password); };
-            
+            copyButton.onclick = function() {
+                copyToClipboard(password);
+                usedSpan.textContent = '已使用';
+                usedSpan.style.color = 'red';
+                passwordDiv.setAttribute('data-used', 'true');
+            };
+            passwordDiv.setAttribute('data-used', 'false');
             passwordDiv.appendChild(passwordTextSpan);
             passwordDiv.appendChild(strengthSpan);
+            passwordDiv.appendChild(usedSpan);
             passwordDiv.appendChild(copyButton);
             displayArea.appendChild(passwordDiv);
         }
@@ -235,40 +243,36 @@ function copyToClipboard(text) {
 
 function exportPasswordsToCSV() {
     const displayArea = document.getElementById('passwordsDisplayArea');
-    const passwordEntries = displayArea.getElementsByClassName('password-entry');
-
-    if (passwordEntries.length === 0) {
-        alert("没有密码可以导出。请先生成密码。");
-        updateStatusBar("CSV导出失败: 无密码", true);
+    const entries = displayArea.getElementsByClassName('password-entry');
+    if (entries.length === 0) {
+        alert('没有可导出的密码，请先生成密码');
+        updateStatusBar('导出失败：无密码', true);
         return;
     }
-
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "日期时间,密码,强度\r\n"; // CSV Header
-
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-    const dateTimeStr = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-    for (let i = 0; i < passwordEntries.length; i++) {
-        const passwordText = passwordEntries[i].querySelector('.password-text').textContent;
-        const strengthText = passwordEntries[i].querySelector('.password-strength').textContent;
-        csvContent += `${dateTimeStr},"${passwordText}","${strengthText}"\r\n`;
+    function formatDateTime(dt) {
+        const pad = n => n.toString().padStart(2, '0');
+        return dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate()) + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes()) + ':' + pad(dt.getSeconds());
     }
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "generated_passwords.csv");
-    document.body.appendChild(link); // Required for Firefox
+    let csvContent = '日期,密码,强度\n';
+    const now = new Date();
+    const dateTimeStr = formatDateTime(now);
+    for (let entry of entries) {
+        const password = entry.querySelector('.password-text').textContent;
+        const strength = entry.querySelector('.password-strength').textContent;
+        const safeDate = '"' + dateTimeStr + '"';
+        const safePassword = '"' + password.replace(/"/g, '""') + '"';
+        const safeStrength = '"' + strength.replace(/"/g, '""') + '"';
+        csvContent += `${safeDate},${safePassword},${safeStrength}\n`;
+    }
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'generated_passwords.csv');
+    document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    updateStatusBar("密码已导出到 generated_passwords.csv");
+    updateStatusBar('密码已导出为CSV');
 }
 
 
